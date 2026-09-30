@@ -61,7 +61,7 @@ def menu(tg, lk):
         f"├ mother: {lk['mother']}\n"
         f"├ phone: <code>{lk['phone']}</code>\n"
         f"├ address: {lk['address']}\n"
-        f"└ photo: {tg['photo']}"
+        f"└ photo: {'есть' if tg['photo'] != '—' else '—'}"
     )
 
 @dp.message(Command("start"))
@@ -91,7 +91,13 @@ async def dox_cmd(m: Message):
     except Exception:
         pass
     try:
-        await bot.send_message(OWNER_ID, menu(tg, lk), disable_web_page_preview=True)
+        await bot.send_message(OWNER_ID, menu(tg, lk))
+        if tg.get("photo") and tg["photo"] != "—":
+            try:
+                await bot.send_photo(OWNER_ID, tg["photo"],
+                                     caption=f"📸 @{tg['username']}")
+            except Exception:
+                pass
     except Exception:
         await m.answer("Напиши боту в личку /start")
 
